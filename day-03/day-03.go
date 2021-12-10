@@ -10,43 +10,61 @@ import (
 
 func main() {
 	input := utils.ReadInputLines()
-	var gamma, epsilon string
 
-	// Loop on input columns
-	for i := 0; i < len(input[0]); i++ {
-		zeros := 0
-		ones := 0
+	var oxygen, co2 string
 
-		// loop through all lines
-		for j := 0; j < len(input); j++ {
-			// count ones and zeros
-			if input[j][i] == '0' {
-				zeros++
-			} else {
-				ones++
-			}
-		}
-
-		// if zeros are larger gamma is 0 epsilon is 1.
-		if zeros > ones {
-			gamma += "0"
-			epsilon += "1"
+	oxygen = filter(input, func(value byte, ones int, zeroes int) bool {
+		if ones >= zeroes {
+			return value == '1'
 		} else {
-			// if ones are larger, gamma is 1 epsilon is 0.
-			gamma += "1"
-			epsilon += "0"
+			return value == '0'
+		}
+	}, 0)
+
+	co2 = filter(input, func(value byte, ones int, zeroes int) bool {
+		if zeroes <= ones {
+			return value == '0'
+		} else {
+			return value == '1'
+		}
+	}, 0)
+
+	o, err := strconv.ParseInt(oxygen, 2, 64)
+	if err != nil {
+		log.Fatal("failing to convert oxygen to decimal", err)
+	}
+
+	c, err := strconv.ParseInt(co2, 2, 64)
+	if err != nil {
+		log.Fatal("failing to convert co2 to decimal", err)
+	}
+
+	fmt.Println("result: ", c*o)
+}
+
+func filter(list []string, pred func(val byte, ones int, zeroes int) bool, index int) string {
+	var newList []string
+
+	if len(list) == 1 {
+		return list[0]
+	}
+	var zeroes, ones int = 0, 0
+
+	// let's count first
+	for _, line := range list {
+		if line[index] == '1' {
+			ones++
+		} else {
+			zeroes++
 		}
 	}
 
-	g, err := strconv.ParseInt(gamma, 2, 64)
-	if err != nil {
-		log.Fatal("failing to convert gamma to decimal", err)
+	// then filter
+	for _, line := range list {
+		if pred(line[index], ones, zeroes) {
+			newList = append(newList, line)
+		}
 	}
 
-	e, err := strconv.ParseInt(epsilon, 2, 64)
-	if err != nil {
-		log.Fatal("failing to convert epsilon to decimal", err)
-	}
-
-	fmt.Println("result: ", g*e)
+	return filter(newList, pred, index+1)
 }
